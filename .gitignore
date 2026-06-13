@@ -1,0 +1,5 @@
+.generating
+.delivered-*
+archive/
+site/
+*.log
