@@ -44,20 +44,19 @@
 
 ```mermaid
 graph TD
-    A[CronCreate<br/>7:03 + 8:57 AM] -->|pointer trigger| B[/loop]
-    B --> C[CONTRACT.md<br/>autoloop v2 合约]
-    C --> D[Step 1: 数据采集]
-    D --> E1[pipeline.sh<br/>多源采集]
-    D --> E2[hyperbrowser<br/>实时抓取]
+    A[CronCreate] -->|7:03 + 8:57 AM| B["/loop trigger"]
+    B --> C[CONTRACT.md]
+    C --> D[数据采集]
+    D --> E1[pipeline.sh 多源]
+    D --> E2[hyperbrowser 实时]
     E1 --> F[去重 + 评分 + 增强]
     E2 --> F
-    F --> G[Step 2: 生成日报<br/>8-15 条 + 💡 解读]
-    G --> H[Step 3: 存档<br/>build-enhanced-site.py]
-    H --> I[Step 4: Telegram 投递<br/>4 分条 / 3500 字符]
-    I --> J[Step 5: URL 持久化<br/>跨天 7 天去重]
-    J --> K[Step 6: 周报<br/>仅周日]
-    I --> L[📱 Telegram]
-    H --> M[🌐 GitHub Pages]
+    F --> G[生成日报]
+    G --> H[存档 + 站点]
+    H --> I[Telegram 投递]
+    I --> J[URL 持久化]
+    H --> M[GitHub Pages]
+    I --> L[Telegram]
 ```
 
 **合约自修订**：CONTRACT.md 每次执行后更新 Current State + Revision Log，无需改 CronCreate。
