@@ -308,9 +308,10 @@ Read these files:
 **Sections** (in order):
 1. **AI/科技新闻** (8-15 条) — 按 AI 评分排序，MUST_INCLUDE 优先
 2. **🔥 GitHub Trending** (3-5 个) — 日增星最快
-3. **💬 社区讨论** (2-3 条) — HN/V2EX/LinuxDo 热帖
-4. **📄 AI 热门论文** (2-3 篇) — HuggingFace 日榜
-5. **🆕 产品/工具** (1-2 个) — 新 AI 产品
+3. **💡 值得关注的新项目** (2-4 个) — 从 trending 列表中筛选：非头部、近期创建（≤7天）、AI/Agent/工具相关、有实际价值。过滤老牌项目（ollama/AutoGPT/dify/langflow/n8n/TensorFlow 等）。每条包含 🏷 topics。本板块独立于头部 trending，提供增量发现价值
+4. **💬 社区讨论** (2-3 条) — HN/V2EX/LinuxDo 热帖
+5. **📄 AI 热门论文** (2-3 篇) — HuggingFace 日榜
+6. **🆕 产品/工具** (1-2 个) — 新 AI 产品
 
 **Section separator**: `---` between each section
 
