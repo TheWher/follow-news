@@ -35,7 +35,7 @@ status: "active"
 
 # 每日 AI 科技日报
 
-**This file IS the /loop prompt.** Each firing reads it, generates the daily digest, delivers it, and self-revises. **v3.20** — multi-source rotation + cross-day URL dedup + weekly summary.
+**This file IS the /loop prompt.** Each firing reads it, generates the daily digest, delivers it, and self-revises. **v3.23** — multi-source rotation + cross-day URL dedup + weekly summary.
 
 ## How to invoke this loop
 
@@ -308,7 +308,7 @@ Read these files:
 **Sections** (in order):
 1. **AI/科技新闻** (8-15 条) — 按 AI 评分排序，MUST_INCLUDE 优先
 2. **🔥 GitHub Trending** (3-5 个) — 日增星最快
-3. **💡 值得关注的新项目** (2-4 个) — 从 trending 列表中筛选：非头部、近期创建（≤7天）、AI/Agent/工具相关、有实际价值。过滤老牌项目（ollama/AutoGPT/dify/langflow/n8n/TensorFlow 等）。每条包含 🏷 topics。本板块独立于头部 trending，提供增量发现价值
+3. **💡 值得关注的新项目** (2-4 个) — 从 trending 列表中筛选：非头部、近期创建（≤7天）、AI/Agent/工具相关、有实际价值。过滤老牌项目（ollama/AutoGPT/dify/langflow/n8n/TensorFlow 等）。每条包含 🏷 topics。**去重规则**：①同天内已在前几版出现过的项目不重复（读 `td-prev-edition-items-$TODAY.json`）；②跨天 3 天内已推荐过的项目不重复（读 `.used-urls.json` 的 `featured_repos` 字段）。新项目优先于高 star 项目。本板块独立于头部 trending，提供增量发现价值
 4. **💬 社区讨论** (2-3 条) — HN/V2EX/LinuxDo 热帖
 5. **📄 AI 热门论文** (2-3 篇) — HuggingFace 日榜
 6. **🆕 产品/工具** (1-2 个) — 新 AI 产品
@@ -322,7 +322,7 @@ Read these files:
 - Chinese output, technical terms in English (LLM, API, Agent, etc.)
 - If `$DELAYED` is true, add `⏰ 今日延迟发送，请见谅。` below the title
 - If `$RERUN_COUNT` >= 1, title format: `# 🌐 每日 AI 科技日报 — 2026年6月22日 第N版 🆕`
-- End with `🤖 autoloop follow-news v3.20`
+- End with `🤖 autoloop follow-news v3.23`
 - **Output markdown only** — do NOT generate HTML.
 - **v3.21 diff mode (RERUN_COUNT >= 2)**: Before writing each section, compare against the previous edition's items (saved in `$CACHE_DIR/td-prev-edition-items-$TODAY.json`). For fixed-layer (GitHub/Community/Papers/Products): only show items that are NEW or whose ranking changed significantly (≥2 positions for GitHub, different title/URL for others). For sections with zero new items: output `⚠️ 与上版相同，无新增` instead of repeating. This gives readers incremental value — they see what changed, not what they already read. The AI agent reads the previous edition's item file and diffs inline — no shell script needed.
 
@@ -336,6 +336,7 @@ import json
 today = '$(date +%Y-%m-%d)'
 items = {
     'github': ['affaan-m/ECC', 'NousResearch/hermes-agent', 'vercel/eve', 'Forsy-AI/agent-apprenticeship', 'overflowy/make-look-scanned'],
+    'featured_repos': [],  # 💡 section repos: ['owner/repo', ...]
     'news_urls': open('$CACHE_DIR/ai-daily-used-urls-$TODAY.txt').read().strip().split('\n') if __import__('os').path.exists('$CACHE_DIR/ai-daily-used-urls-{}.txt'.format(today)) else [],
 }
 # Fill in actual items from the digest just generated — the AI agent updates this
@@ -344,7 +345,7 @@ print('saved edition items for next diff')
 "
 ```
 
-> ⚠️ The AI agent MUST update the above JSON with the actual list of items shown in this edition (GitHub repos, community titles, paper titles, product names). The next rerun reads this file to know what to skip.
+> ⚠️ The AI agent MUST update the above JSON with the actual list of items shown in this edition (GitHub repos, featured_repos, community titles, paper titles, product names). The next rerun reads this file to know what to skip. `featured_repos` is persisted cross-day in `.used-urls.json` for 3-day dedup.
 
 ### Step 3 — 存档 + GitHub Pages 站点 (v5.0 Enhanced)
 
@@ -406,10 +407,21 @@ try:
         link = a.get('link','')
         if link:
             state['urls'][link] = today
+    # Persist featured GitHub repos (💡 section cross-day dedup, 3-day window)
+    prev_file = f'$CACHE_DIR/td-prev-edition-items-{today}.json'
+    if __import__('os').path.exists(prev_file):
+        prev = json.load(open(prev_file))
+        for repo in prev.get('featured_repos', []):
+            state.setdefault('featured_repos', {})[repo] = today
+    from datetime import timedelta
+    cutoff3 = (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d')
+    if 'featured_repos' in state:
+        state['featured_repos'] = {r:d for r,d in state['featured_repos'].items() if d >= cutoff3}
     state['last_prune'] = today
     with open('$USED_URLS','w') as f:
         json.dump(state, f, ensure_ascii=False)
-    print(f'urls-persisted: {len(state[\"urls\"])} total tracked')
+    nf = len(state.get('featured_repos', {}))
+    print(f'urls-persisted: {len(state[\"urls\"])} total tracked, {nf} featured repos')
 except Exception as e:
     print(f'urls-persist-skipped: {e}')
 "
@@ -484,7 +496,7 @@ After completing all 5 steps:
 **Outstanding issues**:
 
 - [x] ~~messages_send MCP broken~~ — Telegram 13/13 全部成功 (2026-06-22)
-- [x] ~~一天多次跑数据重复~~ — v3.19 多源轮换 + v3.20 URL 持久化 — 5 版 0 重复
+- [x] ~~一天多次跑数据重复~~ — v3.19 多源轮换 + v3.23 URL 持久化 — 5 版 0 重复
 - [x] ~~agents-radar 32次 LLM 调用 ¥1.4/次~~ — 放弃，经验已应用到 follow-news
 - [ ] CronCreate 7-day auto-expire — check via `/autoloop:muster`
 
@@ -512,9 +524,9 @@ After completing all 5 steps:
 
 ### Tier 2 (improvements)
 - [x] **多源轮换** (v3.19, 2026-06-22): 手动重跑自动切换数据源（default→TechCrunch→Techmeme→random），去重 URL 追踪
-- [x] **URL 持久化去重** (v3.20, 2026-06-22): `.used-urls.json` 存 Git，跨天 7 天去重，每步自动过滤
+- [x] **URL 持久化去重** (v3.23, 2026-06-22): `.used-urls.json` 存 Git，跨天 7 天去重，每步自动过滤
 - [x] **同天内去重** (v3.21, 2026-06-22): `/tmp/ai-daily-used-urls-$TODAY.txt` 追踪当天所有 run 的 URL，每版过滤已发。RERUN_COUNT ≥3 → NEWS-ONLY（跳过 GitHub/社区/论文/产品固定层）。防止第 4 版重复前面内容。
-- [x] **周报汇总** (v3.20, 2026-06-22): 每周日自动从 7 天存档生成 Top 10 周报，零额外 LLM 成本
+- [x] **周报汇总** (v3.23, 2026-06-22): 每周日自动从 7 天存档生成 Top 10 周报，零额外 LLM 成本
 - [ ] Auto-detect and skip duplicate/similar stories across consecutive days (已由 URL 持久化覆盖)
 
 ---
@@ -546,7 +558,7 @@ After completing all 5 steps:
 
 - 2026-06-22 ~15:45 UTC — **iter-14 (v3.21 NEWS-ONLY)**: RERUN_COUNT=5, rotation=random_pool #2。TechCrunch AI + The Decoder + Bing News 实时抓取。精选 12 条新闻（Samsung ChatGPT 全员部署 · Sakana Fugu 多 LLM 编排 · Altman scaling 路线辩护 · Codex Record & Replay · John Jumper 跳槽 Anthropic · Trump 禁令受益分析 · iOS 27 AI 功能 · AWS Agent 安全 · Damodaran AI 崩盘警告 · Amazon 自研芯片外销 · AI 数据中心绿色通道 · Ambani AI 基建）。NEWS-ONLY 模式——跳过固定层。Telegram 4/4 成功（msg #234-237）。URL 持久化 22 total。
 - 2026-06-22 ~08:30 UTC — **v3.21 同天内 diff 模式**: iter-13 用户反馈第 4 版重复了前面的 GitHub trending 和新闻。修复：Step 0 新增 `USED_URLS_TMP` 同天 URL 追踪（追加模式）。Step 2 新增 diff mode（RERUN_COUNT ≥2 时对比上一版条目，仅展示新上榜/排名变化项，无新增则标注「⚠️ 与上版相同」）。Step 2.5 新增保存本版条目 JSON 供下一版 diff。策略从「跳过固定层」改为「增量 diff」——每版都有增量价值。
-- 2026-06-22 07:00 UTC — **v3.20 周报+URL 持久化**: Step 5 新增 URL 持久化（`.used-urls.json`，跨天 7 天去重，自动剪枝）。新增 Step 6 周报汇总（周日自动从 7 天存档合成 Top 10，零额外 LLM 成本）。评估 agents-radar 后放弃（32 次 LLM 调用 ¥1.4/次），取其精华（周报/URL 持久化/配置驱动）融入 follow-news。
+- 2026-06-22 07:00 UTC — **v3.23 周报+URL 持久化**: Step 5 新增 URL 持久化（`.used-urls.json`，跨天 7 天去重，自动剪枝）。新增 Step 6 周报汇总（周日自动从 7 天存档合成 Top 10，零额外 LLM 成本）。评估 agents-radar 后放弃（32 次 LLM 调用 ¥1.4/次），取其精华（周报/URL 持久化/配置驱动）融入 follow-news。
 - 2026-06-22 06:00 UTC — **v3.19 多源轮换**: 新增手动重跑支持——Step 0 引入 `RUN_MODE`（auto/manual）+ `RERUN_COUNT` 计数器 + 4 级数据源轮换（default→techcrunch_decoder→techmeme_google→random_pool）。Step 1 分支：auto/首次走 pipeline，手动重跑走 hyperbrowser 实时抓取。URL 去重追踪（`/tmp/ai-daily-used-urls-$TODAY.txt`）。固定层复用（<12h 不重新抓取）。手动重跑标题标注「第N版」。iter-11 手动触发 2 次验证轮换生效（v1 default + v2 techcrunch_decoder）。Telegram 6/6 条全部成功。
 - 2026-06-21 04:45 UTC — **iter-10**: Pipeline 收集 128 篇 → 去重 121 篇 → 评分 74 篇过线（18 MUST_INCLUDE + 39 GOOD）→ 精选 13 条新闻 + 5 GitHub + 3 社区 + 3 论文 + 2 产品 → 11.1KB 日报。头条：Anthropic Project Fetch Phase Two · LLM 瓶颈声称突破 · OpenAI Codex「观察学习」能力 · AI 系统提示词第四轮泄露 · AI 数据样本效率黑洞（Dwarkesh Patel）· NVIDIA 机器人自我研究 · Signal CEO 警告 AI 聊天机器人风险 · NYU 教授 AI 泡沫警告 · Nobel 奖得主转投 Anthropic · Atlantic 发布 AI 训练音乐数据库。GitHub：affaan-m/ECC 日增 1.4K star 继续屠榜，NousResearch/hermes-agent +596/d，vercel/eve +472/d。Telegram 4 分条全部成功投递（messageId 217-220）。延迟发送（12:00 BJT）。Cron IDs 已刷新: 0bb3a9db / c0010082。
 - 2026-06-19 04:25 UTC — **iter-8**: Pipeline 收集 164 篇 → 去重 151 篇 → 评分 100 篇过线（23 MUST_INCLUDE）→ 精选 13 条新闻 + 4 GitHub + 3 社区 + 3 论文 + 2 产品。头条：SpaceX 600 亿美元收购 Cursor（AI 工具最大并购）。SK 电信疑与中国关联触发 Anthropic 危机。Trump 向 Anthropic 提出"不可能的要求"。白宫"实时编造"AI 规则。三大 AI 公司系统提示词再次泄露。Microsoft 发现新型加密币窃取后门。以色列上市公司被指运营僵尸网络。Adobe Creative Cloud 全系加入 AI Agent。OpenAI 辅助诊断儿童罕见遗传病。Google AMIE 可管理慢性病。GLM-5.2 发布。印度封禁 Telegram。GitHub：affaan-m/ECC 日增 1.4K star 继续屠榜，vercel/eve 3 天 1.4K star，junction 首日 510 star。Telegram 4 分条全部成功投递。延迟发送（12:00 BJT）。: Pipeline 收集 160 篇 → 去重 150 篇 → 评分 112 篇过线（29 MUST_INCLUDE）→ 精选 15 条新闻 + 5 GitHub + 3 社区 + 3 论文 + 2 产品 → 11.9KB 日报。头条：AI 系统提示词第三轮大规模泄露（Anthropic Fable 5/Opus 4.8 + OpenAI GPT-5.5/Codex + Google Gemini 3.5）。Trump 向 Anthropic 提出"不可能的要求"，SK 电信卷入 Mythos 出口管制。Gary Marcus 分析 OpenAI 领先优势快速缩小。GLM-5.2 被 Simon Willison 评为最强纯文本开源 LLM。US 暂缓 DeepSeek 黑名单但 100+ 中企列入风险名单。Chrome WebMCP 标准提案——浏览器原生 Agent 协议。NVIDIA XR AI 将 Agent 带入 AR 眼镜。北京建 10 万 P 算力 AI 工厂。Midjourney Medical 进军医疗影像。GitHub：ponytail 6 天 32K star 继续屠榜，Vercel eve 首日 794 star，Junction VS Code AI 侧边栏首日 501 star。Telegram 4 分条全部成功投递。
