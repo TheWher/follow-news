@@ -2,4 +2,5 @@
 .delivered-*
 archive/
 site/
+cache/
 *.log
