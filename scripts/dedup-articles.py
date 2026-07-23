@@ -113,8 +113,11 @@ def deduplicate(articles, threshold=0.55):
     return merged
 
 if __name__ == '__main__':
-    input_file = sys.argv[1] if len(sys.argv) > 1 else '/tmp/td-articles.json'
-    output_file = sys.argv[2] if len(sys.argv) > 2 else '/tmp/td-articles-deduped.json'
+    import os, sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+    from config.project_paths import FN_ARTICLES, FN_ARTICLES_DEDUPED
+    input_file = sys.argv[1] if len(sys.argv) > 1 else FN_ARTICLES
+    output_file = sys.argv[2] if len(sys.argv) > 2 else FN_ARTICLES_DEDUPED
 
     with open(input_file, 'r') as f:
         articles = json.load(f)

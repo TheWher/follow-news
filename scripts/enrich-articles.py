@@ -80,8 +80,11 @@ def enrich_article(article):
     return article
 
 if __name__ == '__main__':
-    input_file = sys.argv[1] if len(sys.argv) > 1 else '/tmp/td-articles-scored.json'
-    output_file = sys.argv[2] if len(sys.argv) > 2 else '/tmp/td-articles-enriched.json'
+    import os, sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+    from config.project_paths import FN_ARTICLES_SCORED, FN_ARTICLES_ENRICHED
+    input_file = sys.argv[1] if len(sys.argv) > 1 else FN_ARTICLES_SCORED
+    output_file = sys.argv[2] if len(sys.argv) > 2 else FN_ARTICLES_ENRICHED
 
     with open(input_file, 'r') as f:
         articles = json.load(f)

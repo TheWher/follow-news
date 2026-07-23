@@ -1,0 +1,64 @@
+生成今天的科技日报并发送到微信。
+
+## 配置参数
+- MODE = daily
+- TIME_WINDOW = 过去 1-2 天
+- FRESHNESS = pd
+- RSS_HOURS = 48
+- ITEMS_PER_SECTION = 5-8
+- ENRICH = false
+- BLOG_PICKS_COUNT = 5
+- LANGUAGE = Chinese
+- TEMPLATE = chat
+- SKILL_DIR = /mnt/c/Users/A2260/skills/follow-news
+- WORKSPACE = /mnt/c/Users/A2260/.claude/follow-news
+- DATE = 今天的日期 YYYY-MM-DD
+
+## 执行步骤
+
+### 0. 判断是否延迟发送
+获取当前时间。如果当前时间 > 8:00 AM（北京时间），说明今天因电脑未开机导致延迟，在日报标题下方加一行提示：
+> ⏰ 今日延迟发送，请见谅。
+
+如果是正常 7:00-8:00 时段，不添加此提示。
+
+### 1. 运行数据采集管道
+export PYTHONIOENCODING=utf-8 PYTHONUTF8=1 && cd /mnt/c/Users/A2260/skills/follow-news && python3 scripts/run-pipeline.py --defaults config/defaults --config /mnt/c/Users/A2260/.claude/follow-news/config --hours 48 --freshness pd --archive-dir /mnt/c/Users/A2260/.claude/follow-news/archive/follow-news --output /tmp/td-merged.json --verbose --force
+
+### 2. 查看结构化摘要
+cd /mnt/c/Users/A2260/skills/follow-news && PYTHONIOENCODING=utf-8 python3 scripts/summarize-merged.py --input /tmp/td-merged.json --top 8
+
+### 3. 生成中文日报
+阅读模板文件:
+- /mnt/c/Users/A2260/skills/follow-news/references/templates/chat.md
+- /mnt/c/Users/A2260/skills/follow-news/references/translate.md
+
+**排序规则（重要）**：
+- **按新闻重要性排序，不按类别分组。** 最重要的放最前面，无论它属于哪个类别。
+- 判断重要性的标准：行业影响力 > 实用价值（对开发者/用户）> 话题热度 > 猎奇性
+- 不要为了"各板块均衡"而把重要新闻压到后面
+
+**数量规则**：
+- 总数不设硬上限，只要值得关注就放进去。通常 8-15 条是合理的。
+- 但宁缺毋滥——纯营销稿、无实质内容的更新、和科技/AI无关的跳过
+
+**每条新闻格式**：
+- 标题 (使用 Unicode bold 转换)
+- 1-2 句中文摘要（客观描述新闻内容）
+- 💡 **解读**：我对这条新闻的理解——它意味着什么、能用来做什么、有什么影响或启发。每条都必须有，要说到位但不啰嗦，点出核心价值或潜在用途即可。
+- 源链接 (完整可点击的 URL)
+
+### 4. 发送到微信
+将日报直接发送到当前对话。
+
+### 5. 存档（两个位置都要写）
+- **主文件**：保存到 /mnt/c/Users/A2260/.claude/follow-news/daily-digest.md（覆盖写入，这是 missed-check 和发送脚本读取的文件）
+- **归档副本**：同时保存到 /mnt/c/Users/A2260/.claude/follow-news/archive/follow-news/daily-YYYY-MM-DD.md（保留历史）
+
+## 规则
+- 只报告过去 1-2 天的新闻
+- 每条必须有可点击的源链接
+- 中文输出，专业术语可保留英文
+- 去重: 相同事件只保留最权威来源
+- 不要暴露内部评分、文件路径、命令等技术细节
+- 适合微信阅读，但不要因长度限制而砍掉值得说的新闻

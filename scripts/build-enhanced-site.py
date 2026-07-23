@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
-"""Build a static HTML site from follow-news daily digest archives.
+"""Enhanced static site builder for follow-news daily digest — v5.0.
 
 Thin wrapper delegating to the modular scripts/site_builder/ package.
-Keeping this file for backward compatibility.
+Keeping this file for backward compatibility with existing scripts and README.
+
+Usage:
+  python3 build-enhanced-site.py [--date YYYY-MM-DD]
+  python3 build-enhanced-site.py 2026-07-09
 """
 
 import os

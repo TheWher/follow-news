@@ -1,0 +1,75 @@
+{
+  "_description": "用户自定义 GitHub 监控源覆盖 — 精简 AI 相关，去除无关噪声",
+  "sources": [
+    {
+      "id": "linux-github",
+      "enabled": false,
+      "note": "移除：Linux 内核与 AI 日报无关"
+    },
+    {
+      "id": "rust-github",
+      "enabled": false,
+      "note": "移除：Rust 编译器与 AI 日报无关"
+    },
+    {
+      "id": "picoclaw-github",
+      "enabled": false,
+      "note": "移除：过于小众的嵌入式项目"
+    },
+    {
+      "id": "moltworker-github",
+      "enabled": false,
+      "note": "移除：Cloudflare 内部项目，非 AI 主线"
+    },
+    {
+      "id": "nanobot-github",
+      "enabled": false,
+      "note": "移除：港大学术项目，更新慢"
+    },
+    {
+      "id": "hermes-agent-github",
+      "enabled": false,
+      "note": "移除：Nous Research 单项目，不值得占位"
+    },
+    {
+      "id": "browser-use-github",
+      "type": "github",
+      "name": "Browser Use",
+      "repo": "browser-use/browser-use",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai-agent", "frontier-tech"],
+      "note": "AI 浏览器自动化框架，Hyperbrowser 底层核心"
+    },
+    {
+      "id": "openhands-github",
+      "type": "github",
+      "name": "OpenHands",
+      "repo": "All-Hands-AI/OpenHands",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai-agent", "llm"],
+      "note": "开源 AI 编程 Agent，Claude Code 最强竞品"
+    },
+    {
+      "id": "cline-github",
+      "type": "github",
+      "name": "Cline",
+      "repo": "cline/cline",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai-agent"],
+      "note": "VS Code AI 编程 Agent，开源免费"
+    },
+    {
+      "id": "langgraph-github",
+      "type": "github",
+      "name": "LangGraph",
+      "repo": "langchain-ai/langgraph",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai-agent"],
+      "note": "Agent 编排框架，生产级状态管理"
+    }
+  ]
+}

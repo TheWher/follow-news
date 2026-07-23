@@ -122,8 +122,11 @@ def filter_by_threshold(articles, scores, threshold=5.0):
     return filtered
 
 if __name__ == '__main__':
-    input_file = sys.argv[1] if len(sys.argv) > 1 else '/tmp/td-articles-deduped.json'
-    output_file = sys.argv[2] if len(sys.argv) > 2 else '/tmp/td-articles-scored.json'
+    import os, sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+    from config.project_paths import FN_ARTICLES_DEDUPED, FN_ARTICLES_SCORED
+    input_file = sys.argv[1] if len(sys.argv) > 1 else FN_ARTICLES_DEDUPED
+    output_file = sys.argv[2] if len(sys.argv) > 2 else FN_ARTICLES_SCORED
     threshold = float(sys.argv[3]) if len(sys.argv) > 3 else 5.0
 
     with open(input_file, 'r') as f:

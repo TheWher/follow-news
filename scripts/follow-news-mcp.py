@@ -7,8 +7,16 @@ Tools: search_news, get_trending, get_papers, get_products, get_community, get_d
 import json, sys, os, glob
 from datetime import datetime
 
-ARCHIVE_DIR = "/mnt/c/Users/A2260/.claude/follow-news/archive/follow-news"
-DIGEST_FILE = "/mnt/c/Users/A2260/.claude/follow-news/daily-digest.md"
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from config.project_paths import (
+    ARCHIVE_DIR, LATEST_DIGEST,
+    FN_ARTICLES, FN_ARTICLES_ENRICHED,
+    FN_GITHUB, FN_PAPERS, FN_COMMUNITY, FN_PRODUCTS,
+)
+
+DIGEST_FILE = LATEST_DIGEST
 
 def read_json(path, default=None):
     try:
@@ -113,7 +121,7 @@ def handle_tool(name, args):
         limit = args.get("limit", 10)
         min_score = args.get("min_score", 5.0)
 
-        articles = read_json("/tmp/td-articles-enriched.json") or read_json("/tmp/td-articles.json")
+        articles = read_json(FN_ARTICLES_ENRICHED) or read_json(FN_ARTICLES)
 
         results = []
         for a in articles:
@@ -130,7 +138,7 @@ def handle_tool(name, args):
 
     elif name == "get_trending_repos":
         limit = args.get("limit", 10)
-        repos = read_json("/tmp/td-github-trending.json")
+        repos = read_json(FN_GITHUB)
         lines = []
         for r in repos[:limit]:
             lines.append(f"• {r['title'].split('|')[0].strip()} ⭐{r.get('stars','?')} (+{r.get('daily_growth',0):.0f}/d)\n  {r['link']}")
@@ -138,7 +146,7 @@ def handle_tool(name, args):
 
     elif name == "get_trending_papers":
         limit = args.get("limit", 10)
-        papers = read_json("/tmp/td-papers.json")
+        papers = read_json(FN_PAPERS)
         lines = []
         for p in papers[:limit]:
             lines.append(f"• {p['title']}\n  📄 {p.get('summary','')[:150]}\n  {p.get('link','')}")
@@ -146,7 +154,7 @@ def handle_tool(name, args):
 
     elif name == "get_community_discussions":
         limit = args.get("limit", 8)
-        discussions = read_json("/tmp/td-community.json")
+        discussions = read_json(FN_COMMUNITY)
         lines = []
         for d in discussions[:limit]:
             lines.append(f"• [{d['source']}] {d['title']}\n  💬 {d.get('comments',0)} comments · {d.get('score',0)} pts\n  {d['link']}")
@@ -154,7 +162,7 @@ def handle_tool(name, args):
 
     elif name == "get_new_products":
         limit = args.get("limit", 5)
-        products = read_json("/tmp/td-products.json")
+        products = read_json(FN_PRODUCTS)
         lines = []
         for p in products[:limit]:
             lines.append(f"• [{p['source']}] {p['title']}\n  🆕 {p.get('summary','')[:150]}\n  {p['link']}")

@@ -3,4 +3,8 @@
 archive/
 site/
 cache/
+data/
 *.log
+__pycache__/
+.rerun-count-*
+tmp-msg-*.txt
